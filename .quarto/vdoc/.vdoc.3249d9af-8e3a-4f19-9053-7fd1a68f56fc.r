@@ -1,0 +1,100 @@
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#| message: false
+library(tidyverse)
+library(readxl)
+#
+#
+#
+births <- read_excel("data/us_births_1994_2014.xlsx")
+
+tibble(
+  column = names(births),
+  type = map_chr(births, ~ paste(class(.x), collapse = ", ")),
+  examples = map_chr(births, ~ paste(head(.x, 3), collapse = ", "))
+)
+#
+#
+#
+births |>
+  select(births, year) |>
+  summary()
+#
+#
+#
+#| cache: true
+births_tibble <- read_excel("data/us_births_1994_2014.xlsx") |>
+  mutate(
+    day_of_week = factor(
+      day_of_week,
+      levels = c("Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"),
+      ordered = TRUE
+    )
+  )
+#
+#
+#
+births |>
+  group_by(month, date_of_month) |>
+  summarize(
+    average_births = mean(births),
+    .groups = "drop"
+  ) |>
+  mutate(
+    month = factor(
+      month,
+      levels = 12:1,
+      labels = month.name[12:1]
+    )
+  ) |>
+  ggplot(aes(x = date_of_month, y = month, fill = average_births)) +
+  geom_tile() +
+  scale_x_continuous(breaks = 1:31) +
+  scale_fill_viridis_c(name = "Mean births") +
+  labs(x = "Day of month", y = NULL) +
+  theme_minimal()
+#
+#
+#
+christmas_data <- births |>
+  filter(month == 12) |>
+  group_by(year) |>
+  summarize(
+    christmas_births = births[date_of_month == 25],
+    christmas_weekday = day_of_week[date_of_month == 25],
+    baseline_births = mean(
+      births[date_of_month %in% c(20:24, 27:30)]
+    ),
+    pct_of_baseline = 100 * christmas_births / baseline_births,
+    .groups = "drop"
+  )
+
+christmas_data
+#
+#
+#
+summary(christmas_data)
+#
+#
+#
+christmas_data |>
+  ggplot(aes(x = year, y = pct_of_baseline)) +
+  geom_line() +
+  geom_point(aes(color = christmas_weekday)) +
+  labs(
+    x = "Year",
+    y = "December 25 births (% of baseline)"
+  ) +
+  theme_minimal()
+#
+#
+#
+#
+#
