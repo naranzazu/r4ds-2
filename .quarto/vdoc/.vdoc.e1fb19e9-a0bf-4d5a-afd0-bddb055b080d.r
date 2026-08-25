@@ -1,26 +1,62 @@
----
-title: "Analyzing US Births and Basketball Recruits"
-format: html
-author: Nicolas
-execute:
-  echo: false
----
-
-```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
 #| message: false
 library(tidyverse)
 library(readxl)
-```
+#
+#
+#
+nba_recruits <- read_excel("data/nba_recruits.xlsx")
 
-```{r}
+tibble(
+  column = names(nba_recruits),
+  type = map_chr(nba_recruits, ~ paste(class(.x), collapse = ", ")),
+  examples = map_chr(nba_recruits, ~ paste(head(.x, 3), collapse = ", "))
+)
+#
+#
+#
+nba_recruits |>
+  select(rank, nba_mean_ws48, top_mean_wa, total_seasons, drafted) |>
+  summary()
+#
+#
+#
+basketball_tibble <- nba_recruits |>
+  mutate(
+    tier = factor(
+      tier,
+      levels = c(
+        "Never played",
+        "Brief career",
+        "Solid career",
+        "All-Star level",
+        "Superstar"
+      ),
+      ordered = TRUE
+    )
+  )
+
+basketball_tibble |>
+  count(tier)
+#
+#
+#
 births <- read_excel("data/us_births_1994_2014.xlsx")
 
 births |>
   select(births, year) |>
   summary()
-```
-
-```{r}
+#
+#
+#
 #| cache: true
 births_tibble <- read_excel("data/us_births_1994_2014.xlsx") |>
   mutate(
@@ -30,9 +66,9 @@ births_tibble <- read_excel("data/us_births_1994_2014.xlsx") |>
       ordered = TRUE
     )
   )
-```
-
-```{r}
+#
+#
+#
 births |>
   group_by(month, date_of_month) |>
   summarize(
@@ -52,9 +88,9 @@ births |>
   scale_fill_viridis_c(name = "Mean births") +
   labs(x = "Day of month", y = NULL) +
   theme_minimal()
-```
-
-```{r}
+#
+#
+#
 christmas_data <- births |>
   filter(month == 12) |>
   group_by(year) |>
@@ -69,13 +105,13 @@ christmas_data <- births |>
   )
 
 christmas_data
-```
-
-```{r}
+#
+#
+#
 summary(christmas_data)
-```
-
-```{r}
+#
+#
+#
 christmas_data |>
   ggplot(aes(x = year, y = pct_of_baseline)) +
   geom_line() +
@@ -85,58 +121,24 @@ christmas_data |>
     y = "December 25 births (% of baseline)"
   ) +
   theme_minimal()
-```
-
-```{r}
-nba_recruits <- read_excel("data/nba_recruits.xlsx")
-
-tibble(
-  column = names(nba_recruits),
-  type = map_chr(nba_recruits, ~ paste(class(.x), collapse = ", ")),
-  examples = map_chr(nba_recruits, ~ paste(head(.x, 3), collapse = ", "))
-)
-```
-
-```{r}
-nba_recruits |>
-  select(rank, nba_mean_ws48, top_mean_wa, total_seasons, drafted) |>
-  summary()
-```
-
-```{r}
-#| cache: true
-basketball_tibble <- nba_recruits |>
-  mutate(
-    tier = factor(
-      tier,
-      levels = c(
-        "Never played",
-        "Brief career",
-        "Solid career",
-        "All-Star level",
-        "Superstar"
-      ),
-      ordered = TRUE
-    )
-  )
-```
-
-```{r}
+#
+#
+#
 births_model <- lm(births ~ year + month + day_of_week, data = births)
 
 summary(births_model)$r.squared
-```
-
-```{r}
+#
+#
+#
 births_adjusted <- births_tibble |>
   mutate(
     pct_resid = 100 * residuals(births_model) / mean(births)
   )
 
 str(births_adjusted)
-```
-
-```{r}
+#
+#
+#
 calendar_resid <- births_adjusted |>
   filter(!(month == 2 & date_of_month == 29)) |>
   group_by(month, date_of_month) |>
@@ -148,9 +150,9 @@ calendar_resid <- births_adjusted |>
   select(calendar_date, mean_pct_resid)
 
 calendar_resid
-```
-
-```{r}
+#
+#
+#
 holiday_dips <- tribble(
   ~holiday, ~calendar_date,
   "New Year's Day", make_date(2001, 1, 1),
@@ -179,45 +181,18 @@ calendar_resid |>
     y = "Mean residual (% of average births)"
   ) +
   theme_minimal()
+#
+#
+#
+births <- read_excel("data/us_births_1994_2014.xlsx")
 
-basketball_tibble <- basketball_tibble |>
-  mutate(
-    recruit_group = factor(
-      recruit_group,
-      levels = c(
-        "#1–10",
-        "#11–25",
-        "#26–50",
-        "#51–100",
-        "Outside top 100"
-      ),
-      ordered = TRUE
-    )
-  )
-
-basketball_tibble |>
-  count(recruit_group)
-```
-
-```{r}
-basketball_tibble |>
-  filter(!is.na(rank), !is.na(top_mean_wa)) |>
-  ggplot(aes(x = rank, y = top_mean_wa, color = tier)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "black") +
-  geom_text(
-    data = basketball_tibble |>
-      filter(!is.na(rank), !is.na(top_mean_wa)) |>
-      slice_max(top_mean_wa, n = 4, with_ties = FALSE),
-    aes(label = name),
-    check_overlap = TRUE,
-    vjust = -0.5,
-    show.legend = FALSE
-  ) +
-  labs(
-    x = "Recruit rank",
-    y = "Peak Wins Added",
-    color = "Career tier"
-  ) +
-  theme_minimal()
-```
+tibble(
+  column = names(births),
+  type = map_chr(births, ~ paste(class(.x), collapse = ", ")),
+  examples = map_chr(births, ~ paste(head(.x, 3), collapse = ", "))
+)
+#
+#
+#
+#
+#
